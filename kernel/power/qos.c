@@ -861,6 +861,15 @@ static ssize_t pm_qos_power_write(struct file *filp, const char __user *buf,
 			return ret;
 	}
 
+	switch (value) {
+		case 0x67:
+			value = 67;
+			break;
+		case 0x100:
+			return count;
+			break;
+	}
+
 	req = filp->private_data;
 	pm_qos_update_request(req, value);
 
