@@ -260,6 +260,8 @@ void fuse_release_common(struct file *file, bool isdir)
 	struct fuse_req *req = ff->reserved_req;
 	int opcode = isdir ? FUSE_RELEASEDIR : FUSE_RELEASE;
 
+	fuse_passthrough_release(&ff->passthrough);
+
 	fuse_prepare_release(ff, file->f_flags, opcode);
 
 	if (ff->flock) {
