@@ -2042,8 +2042,7 @@ static void change_pageblock_range(struct page *pageblock_page,
  * is worse than movable allocations stealing from unmovable and reclaimable
  * pageblocks.
  */
-static bool can_steal_fallback(unsigned int order, int start_mt, int fallback_type,
-								unsigned int start_order)
+static bool can_steal_fallback(unsigned int order, int start_mt)
 {
 	/*
 	 * Leaving this order check is intended, although there is
@@ -2055,15 +2054,10 @@ static bool can_steal_fallback(unsigned int order, int start_mt, int fallback_ty
 	if (order >= pageblock_order)
 		return true;
 
-	/* don't let unmovable allocations cause migrations simply because of free pages */
-	if ((start_mt != MIGRATE_UNMOVABLE && order >= pageblock_order / 2) ||
-	/* only steal reclaimable page blocks for unmovable allocations */
-	(start_mt == MIGRATE_UNMOVABLE && fallback_type != MIGRATE_MOVABLE && order >= pageblock_order / 2) ||
-	/* reclaimable can steal aggressively */
-	start_mt == MIGRATE_RECLAIMABLE ||
-	/* allow unmovable allocs up to 64K without migrating blocks */
-	(start_mt == MIGRATE_UNMOVABLE && start_order >= 5) ||
-	page_group_by_mobility_disabled)
+	if (order >= pageblock_order / 2 ||
+		start_mt == MIGRATE_RECLAIMABLE ||
+		start_mt == MIGRATE_UNMOVABLE ||
+		page_group_by_mobility_disabled)
 		return true;
 
 	return false;
@@ -2154,7 +2148,7 @@ single_page:
  * fragmentation due to mixed migratetype pages in one pageblock.
  */
 int find_suitable_fallback(struct free_area *area, unsigned int order,
-			int migratetype, bool only_stealable, bool *can_steal, unsigned int start_order)
+			int migratetype, bool only_stealable, bool *can_steal)
 {
 	int i;
 	int fallback_mt;
@@ -2171,7 +2165,7 @@ int find_suitable_fallback(struct free_area *area, unsigned int order,
 		if (list_empty(&area->free_list[fallback_mt]))
 			continue;
 
-		if (can_steal_fallback(order, migratetype, fallback_mt, start_order))
+		if (can_steal_fallback(order, migratetype))
 			*can_steal = true;
 
 		if (!only_stealable)
@@ -2332,7 +2326,7 @@ __rmqueue_fallback(struct zone *zone, int order, int start_migratetype)
 				--current_order) {
 		area = &(zone->free_area[current_order]);
 		fallback_mt = find_suitable_fallback(area, current_order,
-				start_migratetype, false, &can_steal, order);
+				start_migratetype, false, &can_steal);
 		if (fallback_mt == -1)
 			continue;
 
@@ -2358,7 +2352,7 @@ find_smallest:
 							current_order++) {
 		area = &(zone->free_area[current_order]);
 		fallback_mt = find_suitable_fallback(area, current_order,
-				start_migratetype, false, &can_steal, order);
+				start_migratetype, false, &can_steal);
 		if (fallback_mt != -1)
 			break;
 	}
