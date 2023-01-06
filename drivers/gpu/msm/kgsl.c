@@ -1174,8 +1174,7 @@ static int kgsl_close_device(struct kgsl_device *device)
 	int result = 0;
 
 	mutex_lock(&device->mutex);
-	device->open_count--;
-	if (device->open_count == 0) {
+	if (device->open_count == 1) {
 
 		/* Wait for the active count to go to 0 */
 		kgsl_active_count_wait(device, 0);
@@ -1185,6 +1184,7 @@ static int kgsl_close_device(struct kgsl_device *device)
 
 		result = kgsl_pwrctrl_change_state(device, KGSL_STATE_INIT);
 	}
+  device->open_count--;
 	mutex_unlock(&device->mutex);
 	return result;
 
