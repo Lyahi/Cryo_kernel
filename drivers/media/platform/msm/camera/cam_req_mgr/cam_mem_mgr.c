@@ -1,5 +1,5 @@
 /* Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
- *
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
  * only version 2 as published by the Free Software Foundation.
@@ -458,7 +458,6 @@ static int cam_mem_util_get_dma_buf_fd(size_t len,
 	struct dma_buf **buf,
 	int *fd)
 {
-	struct dma_buf *dmabuf = NULL;
 	int rc = 0;
 
 	if (!buf || !fd) {
@@ -470,24 +469,19 @@ static int cam_mem_util_get_dma_buf_fd(size_t len,
 	if (IS_ERR_OR_NULL(*buf))
 		return -ENOMEM;
 
-	*fd = dma_buf_fd(*buf, O_CLOEXEC);
-	if (*fd < 0) {
-		CAM_ERR(CAM_MEM, "get fd fail, *fd=%d", *fd);
-		rc = -EINVAL;
-		goto get_fd_fail;
-	}
-
 	/*
 	 * increment the ref count so that ref count becomes 2 here
 	 * when we close fd, refcount becomes 1 and when we do
 	 * dmap_put_buf, ref count becomes 0 and memory will be freed.
 	 */
-	dmabuf = dma_buf_get(*fd);
-	if (IS_ERR_OR_NULL(dmabuf)) {
-		CAM_ERR(CAM_MEM, "dma_buf_get failed, *fd=%d", *fd);
-		rc = -EINVAL;
-	}
+	get_dma_buf(*buf);
 
+	*fd = dma_buf_fd(*buf, O_CLOEXEC);
+	if (*fd < 0) {
+		CAM_ERR(CAM_MEM, "get fd fail, *fd=%d", *fd);
+    rc = -EINVAL;
+    goto get_fd_fail;
+	}
 	return rc;
 
 get_fd_fail:
