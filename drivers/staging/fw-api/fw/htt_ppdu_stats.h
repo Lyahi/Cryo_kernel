@@ -2590,7 +2590,7 @@ typedef struct {
      * The size of the actual mgmt payload (in bytes) can be obtained from
      * the frame_length field.
      * The size of entire payload including the padding for alignment
-     * (in bytes) can be derived from the length in tlv parametes,
+     * (in bytes) can be derived from the length in tlv parameters,
      * minus the 12 bytes of the above fields.
      */
     A_UINT32 payload[1];
@@ -2632,7 +2632,7 @@ typedef struct {
      * The size of the actual mgmt payload (in bytes) can be obtained from
      * the frame_length field.
      * The size of entire payload including the padding for alignment
-     * (in bytes) can be derived from the length in tlv parametes,
+     * (in bytes) can be derived from the length in tlv parameters,
      * minus the 12 bytes of the above fields.
      */
     A_UINT32 payload[1];

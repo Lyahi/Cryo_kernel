@@ -12708,6 +12708,18 @@ out_dword_masked_ns(HWIO_REO_R0_CACHE_CTL_GXI_PRIORITY_ADDR(x),m,v,HWIO_REO_R0_C
 #define HWIO_TCL_R0_CONS_RING_CMN_CTRL_REG_DSCP_TID_MAP_PROGRAM_EN_BMSK                                       0x800000
 #define HWIO_TCL_R0_CONS_RING_CMN_CTRL_REG_DSCP_TID_MAP_PROGRAM_EN_SHFT                                             23
 
+#define HWIO_TCL_R0_CONS_RING_CMN_CTRL_REG_PPE2TCL1_RNG_HALT_STAT_BMSK                                         0x40000
+#define HWIO_TCL_R0_CONS_RING_CMN_CTRL_REG_PPE2TCL1_RNG_HALT_STAT_SHFT                                              18
+#define HWIO_TCL_R0_CONS_RING_CMN_CTRL_REG_PPE2TCL1_RNG_HALT_BMSK                                                0x400
+#define HWIO_TCL_R0_CONS_RING_CMN_CTRL_REG_PPE2TCL1_RNG_HALT_SHFT                                                   10
+
+
+#define HWIO_TCL_R0_CMN_CONFIG_ADDR(x)                                                                      ((x) + 0x24)
+#define HWIO_TCL_R0_CMN_CONFIG_VDEVID_MISMATCH_EXCEPTION_BMSK                                                 0x400000
+#define HWIO_TCL_R0_CMN_CONFIG_VDEVID_MISMATCH_EXCEPTION_SHFT                                                       22
+#define HWIO_TCL_R0_CMN_CONFIG_MCAST_CMN_PN_SN_MLO_REINJECT_ENABLE_BMSK                                            0x1
+#define HWIO_TCL_R0_CMN_CONFIG_MCAST_CMN_PN_SN_MLO_REINJECT_ENABLE_SHFT                                              0
+
 #define HWIO_TCL_R0_RBM_MAPPING0_ADDR(x)                                                                    ((x) + 0x88)
 #define HWIO_TCL_R0_RBM_MAPPING0_PHYS(x)                                                                    ((x) + 0x88)
 #define HWIO_TCL_R0_RBM_MAPPING0_OFFS                                                                       (0x88)
