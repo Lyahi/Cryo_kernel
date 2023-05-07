@@ -263,9 +263,9 @@ static int simple_lmk_reclaim_thread(void *data)
 	sched_setscheduler_nocheck(current, SCHED_FIFO, &sched_max_rt_prio);
 
 	while (1) {
-		wait_event(oom_waitq, atomic_read(&needs_reclaim));
-		scan_and_kill(MIN_FREE_PAGES);
-		atomic_set_release(&needs_reclaim, 0);
+		wait_event_freezable(oom_waitq, atomic_read(&needs_reclaim));
+		scan_and_kill();
+		atomic_set(&needs_reclaim, 0);
 	}
 
 	return 0;
@@ -296,8 +296,12 @@ void simple_lmk_trigger(void)
 static int simple_lmk_vmpressure_cb(struct notifier_block *nb,
 				    unsigned long pressure, void *data)
 {
-	if (pressure >= 80)
-		simple_lmk_trigger();
+	if (pressure == 100) {
+		atomic_set(&needs_reclaim, 1);
+		smp_mb__after_atomic();
+		if (waitqueue_active(&oom_waitq))
+			wake_up(&oom_waitq);
+	}
 
 	return NOTIFY_OK;
 }
