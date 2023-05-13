@@ -317,6 +317,7 @@ struct txrx_pdev_cfg_param_t {
 	uint32_t tc_ingress_prio;
 	bool tso_enable;
 	bool lro_enable;
+	bool sg_enable;
 	bool enable_data_stall_detection;
 	bool enable_flow_steering;
 	bool disable_intra_bss_fwd;
