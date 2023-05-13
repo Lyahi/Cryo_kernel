@@ -1,5 +1,6 @@
 /* Copyright (c) 2016-2017, 2019-2020, The Linux Foundation. All rights reserved.
  * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
  * only version 2 as published by the Free Software Foundation.
@@ -103,13 +104,14 @@ _kgsl_pool_add_page(struct kgsl_page_pool *pool, struct page *p)
 	 * Sanity check to make sure we don't re-pool a page that
 	 * somebody else has a reference to.
 	 */
-	if (WARN_ON_ONCE(unlikely(page_count(p) > 1))) {
+	if (WARN_ON(unlikely(page_count(p) > 1))) {
 		__free_pages(p, pool->pool_order);
 		return;
 	}
 
 	llist_add((struct llist_node *)&p->lru, &pool->page_list);
 	atomic_inc(&pool->page_count);
+
 	mod_node_page_state(page_pgdat(p), NR_KERNEL_MISC_RECLAIMABLE,
 				(1 << pool->pool_order));
 }

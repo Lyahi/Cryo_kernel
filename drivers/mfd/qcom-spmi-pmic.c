@@ -153,7 +153,7 @@ static void pmic_spmi_remove(struct spmi_device *sdev) {}
 
 static struct spmi_driver pmic_spmi_driver = {
 	.probe = pmic_spmi_probe,
-  .remove = pmic_spmi_remove,
+	.remove = pmic_spmi_remove,
 	.driver = {
 		.name = "pmic-spmi",
 		.of_match_table = pmic_spmi_id_table,
