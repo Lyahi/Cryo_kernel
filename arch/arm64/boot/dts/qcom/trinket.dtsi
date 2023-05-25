@@ -319,11 +319,14 @@
 
 		CPU_COST_0: core-cost0 {
 			busy-cost-data = <
-				864000	68
-				1017600	79
-				1305600 114
-				1612800	171
-				1804800	223
+				300000  12
+				614400  22
+				864000	39
+				1017600	54
+				1305600 83
+				1420800 102
+				1612800	130
+				1804800	172
 			>;
 			idle-cost-data = <
 				10 8 6 4
@@ -332,11 +335,14 @@
 
 		CPU_COST_1: core-cost1 {
 			busy-cost-data = <
-				902400	154
-				1401600	289
-				1536000 344
-				1804800 469
-				2016000	596
+				300000  211
+				652800  417
+				902400	722
+				1056000 991
+				1401600	1577
+				1536000 1932
+				1804800 2579
+				2016000	3391
 			>;
 			idle-cost-data = <
 				100 60 40 20
@@ -345,9 +351,12 @@
 
 		CLUSTER_COST_0: cluster-cost0 {
 			busy-cost-data = <
+				300000  5
+				614400  8
 				864000	9
 				1017600	12
 				1305600	18
+				1420800 21
 				1612800	27
 				1804800	36
 			>;
@@ -358,7 +367,10 @@
 
 		CLUSTER_COST_1: cluster-cost1 {
 			busy-cost-data = <
+				300000  38
+				652800  46
 				902400	52
+				1056000 68
 				1401600	88
 				1536000	100
 				1804800	108
@@ -862,19 +874,6 @@
 			<0xf523000 0x1400>;
 		reg-names = "osm_pwrcl_base", "osm_perfcl_base";
 		#clock-cells = <1>;
-		qcom,cpufreq-table-0 =
-			<864000>,
-			<1017600>,
-			<1305600>,
-			<1612800>,
-			<1804800>;
-
-		qcom,cpufreq-table-4 =
-			<902400>,
-			<1401600>,
-			<1536000>,
-			<1804800>,
-			<2016000>;
 	};
 
 	clock_debugcc: qcom,cc-debug {
@@ -1020,7 +1019,7 @@
 
 		/* PM QoS */
 		qcom,pm-qos-cpu-groups = <0x0f 0xf0>;
-		qcom,pm-qos-cpu-group-latency-us = <43 43>;
+		qcom,pm-qos-cpu-group-latency-us = <26 26>;
 		qcom,pm-qos-default-cpu = <0>;
 
 		pinctrl-names = "dev-reset-assert", "dev-reset-deassert";
@@ -2199,10 +2198,10 @@
 
 		/* PM QoS */
 		qcom,pm-qos-irq-type = "affine_irq";
-		qcom,pm-qos-irq-latency = <43 43>;
+		qcom,pm-qos-irq-latency = <40 40>;
 		qcom,pm-qos-cpu-groups = <0x0f 0xf0>;
-		qcom,pm-qos-cmdq-latency-us = <43 43>, <43 43>;
-		qcom,pm-qos-legacy-latency-us = <43 43>, <43 43>;
+		qcom,pm-qos-cmdq-latency-us = <40 40>, <40 40>;
+		qcom,pm-qos-legacy-latency-us = <40 40>, <40 40>;
 
 		qcom,scaling-lower-bus-speed-mode = "DDR52";
 
@@ -2271,9 +2270,9 @@
 
 		/* PM QoS */
 		qcom,pm-qos-irq-type = "affine_irq";
-		qcom,pm-qos-irq-latency = <43 43>;
+		qcom,pm-qos-irq-latency = <40 40>;
 		qcom,pm-qos-cpu-groups = <0x0f 0xf0>;
-		qcom,pm-qos-legacy-latency-us = <43 43>, <43 43>;
+		qcom,pm-qos-legacy-latency-us = <40 40>, <40 40>;
 
 		clocks = <&clock_gcc GCC_SDCC2_AHB_CLK>,
 			<&clock_gcc GCC_SDCC2_APPS_CLK>;
