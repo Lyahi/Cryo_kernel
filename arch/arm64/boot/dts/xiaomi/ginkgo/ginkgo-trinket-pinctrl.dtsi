@@ -314,3 +314,11 @@
 		pins = "gpio22", "gpio23", "gpio25";
 	};
 };
+
+&qupv3_se8_i2c_sleep {
+
+	config {
+		pins = "gpio18", "gpio19";
+		bias-pull-up;
+	};
+};
