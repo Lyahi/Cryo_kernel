@@ -23,6 +23,8 @@
 #include <linux/interrupt.h>
 #include <linux/irqdesc.h>
 
+#include <linux/module.h>
+
 #include "power.h"
 
 #ifdef CONFIG_BOEFFLA_WL_BLOCKER
@@ -40,6 +42,15 @@ suspend_state_t pm_suspend_target_state;
 #define pm_suspend_target_state	(PM_SUSPEND_ON)
 #endif
 
+static int ws_disable = 1;
+static int ws_debug = 0;
+static int ws_debug_stack = 0;
+static char ws_stack_name[256] = "unknown work source";
+
+module_param(ws_disable, int, 0664);
+module_param(ws_debug, int, 0664);
+module_param(ws_debug_stack, int, 0664);
+module_param_string(ws_stack_name, ws_stack_name, sizeof(ws_stack_name), 0664);
 /*
  * If set, the suspend/hibernate code will abort transitions to a sleep state
  * if wakeup events are registered during or immediately before the transition.
@@ -130,6 +141,10 @@ struct wakeup_source *wakeup_source_create(const char *name)
 	if (id < 0)
 		goto err_id;
 	ws->id = id;
+
+  if( !strncmp(name,"[timerfd20_system_server]",25) ) {
+    ws->disable = true;
+  }
 
 	return ws;
 
@@ -595,6 +610,8 @@ static void wakeup_source_activate(struct wakeup_source *ws)
 			"unregistered wakeup source\n"))
 		return;
 
+  if( unlikely(ws_disable) && ws->disable ) return;
+
 	ws->active = true;
 	ws->active_count++;
 	ws->last_time = ktime_get();
@@ -604,6 +621,18 @@ static void wakeup_source_activate(struct wakeup_source *ws)
 	/* Increment the counter of events in progress. */
 	cec = atomic_inc_return(&combined_event_count);
 
+  if( unlikely(ws_debug) ) {
+    pr_info("ws->activate:%s", ws->name);
+    if( unlikely(ws_debug_stack) ) {
+      char *nl = strnchr(ws_stack_name,10,256);
+      if( nl != NULL ) *nl = 0;
+      nl = strnchr(ws_stack_name,13,256);
+      if( nl != NULL ) *nl = 0;
+      if( strncmp(ws->name,ws_stack_name,256) ) {
+        dump_stack();
+      }
+    }
+  }
 	trace_wakeup_source_activate(ws->name, cec);
 }
 
@@ -752,6 +781,8 @@ static void wakeup_source_deactivate(struct wakeup_source *ws)
 	ktime_t duration;
 	ktime_t now;
 
+  if( !ws->active ) return;
+
 	ws->relax_count++;
 	/*
 	 * __pm_relax() may be called directly or from a timer function.
@@ -792,6 +823,11 @@ static void wakeup_source_deactivate(struct wakeup_source *ws)
 	split_counters(&cnt, &inpr);
 	if (!inpr && waitqueue_active(&wakeup_count_wait_queue))
 		wake_up(&wakeup_count_wait_queue);
+
+  if( unlikely(ws_debug) ) {
+    pr_info("ws->deactivate:%s",ws->name);
+  }
+
 }
 
 /**
@@ -883,7 +919,7 @@ void pm_wakeup_ws_event(struct wakeup_source *ws, unsigned int msec, bool hard)
 
 	spin_lock_irqsave(&ws->lock, flags);
 
-	wakeup_source_report_event(ws, hard);
+  if( msec > 0 ) wakeup_source_report_event(ws, hard);
 
 	if (!msec) {
 		wakeup_source_deactivate(ws);
