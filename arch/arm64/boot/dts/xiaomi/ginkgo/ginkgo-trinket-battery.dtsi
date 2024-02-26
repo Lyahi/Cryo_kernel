@@ -9,13 +9,17 @@
 	qcom,vbatt-cutoff-mv = <3500>;
 	qcom,hold-soc-while-full;
 	qcom,linearize-soc;
-	qcom,qg-use-s7-ocv;
 	qcom,s3-entry-ibat-ua = <18000>;
-	qcom,s3-exit-ibat-ua = <38000>;
+  qcom,s3-exit-ibat-ua = <38000>;
+	qcom,bass-enable;
 	qcom,qg-vadc = <&pmi632_vadc>;
 };
 
 &pmi632_charger {
+	/delete-property/ qcom,step-charging-enable;
+	/delete-property/ qcom,hw-connector-mitigation;
+	/delete-property/ qcom,connector-internal-pull-kohm;
+
 	qcom,fcc-max-ua = <3000000>;
 	qcom,fv-max-uv = <4400000>;
 	qcom,dc-icl-ua = <3000000>;
@@ -24,14 +28,10 @@
 	qcom,chg-term-current-ma = <(-200)>;
 	qcom,sw-jeita-enable;
 	qcom,sec-charger-config = <0>;
-	dpdm-supply = <&qusb_phy0>;
-	qcom,charger-temp-max = <800>;
-	qcom,smb-temp-max = <800>;
 	qcom,auto-recharge-soc = <99>;
 	qcom,flash-disable-soc = <0>;
-	qcom,hw-die-temp-mitigation;
 	qcom,thermal-mitigation = <3000000 2500000 2000000
-		2000000 1500000 900000 800000 500000 100000>;
+			2000000 1500000 900000 800000 500000 100000>;
 };
 
 &smb1355 {
