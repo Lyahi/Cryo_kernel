@@ -1527,7 +1527,7 @@ static int afe_send_custom_topology_block(struct cal_block_data *cal_block)
 		return -EINVAL;
 	}
 	if (cal_block->cal_data.size <= 0) {
-		pr_err("%s: AFE SVC cal has invalid size: %zd!\n",
+		pr_debug("%s: AFE SVC cal has invalid size: %zd!\n",
 		__func__, cal_block->cal_data.size);
 		return -EINVAL;
 	}
@@ -6544,7 +6544,7 @@ static int afe_sidetone_iir(u16 tx_port_id)
 	mutex_lock(&this_afe.cal_data[cal_index]->lock);
 	cal_block = cal_utils_get_only_cal_block(this_afe.cal_data[cal_index]);
 	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block)) {
-		pr_err("%s: cal_block not found\n ", __func__);
+		pr_debug("%s: cal_block not found\n ", __func__);
 		mutex_unlock(&this_afe.cal_data[cal_index]->lock);
 		ret = -EINVAL;
 		goto done;
@@ -6671,7 +6671,7 @@ static int afe_sidetone(u16 tx_port_id, u16 rx_port_id, bool enable)
 	mutex_lock(&this_afe.cal_data[cal_index]->lock);
 	cal_block = cal_utils_get_only_cal_block(this_afe.cal_data[cal_index]);
 	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block)) {
-		pr_err("%s: cal_block not found\n", __func__);
+		pr_debug("%s: cal_block not found\n", __func__);
 		mutex_unlock(&this_afe.cal_data[cal_index]->lock);
 		ret = -EINVAL;
 		goto done;
