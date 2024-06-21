@@ -69,7 +69,7 @@
  * After a CPU has dirtied this many pages, balance_dirty_pages_ratelimited
  * will look to see if it needs to force writeback or throttling.
  */
-static long ratelimit_pages = 256;
+static long ratelimit_pages = 32;
 
 /* The following parameters are exported via /proc/sys/vm */
 
@@ -82,7 +82,18 @@ int vm_highmem_is_dirtyable;
 /*
  * The generator of dirty data starts writeback at this percentage
  */
-int vm_dirty_ratio = 30;
+int vm_dirty_ratio = 20;
+
+/*
+ * Start background writeback (via writeback threads) at this percentage
+ */
+int dirty_background_ratio = 10;
+
+/*
+ * dirty_background_bytes starts at 0 (disabled) so that it is a function of
+ * dirty_background_ratio * the amount of dirtyable memory
+ */
+unsigned long dirty_background_bytes;
 
 /*
  * vm_dirty_bytes starts at 0 (disabled) so that it is a function of
@@ -389,10 +400,10 @@ static void domain_dirty_limits(struct dirty_throttle_control *dtc)
 	const unsigned long available_memory = dtc->avail;
 	struct dirty_throttle_control *gdtc = mdtc_gdtc(dtc);
 	unsigned long bytes = vm_dirty_bytes;
-	unsigned long bg_bytes = vm_dirty_bytes / LOCKED_DIRTY_RATIO;
+	unsigned long bg_bytes = dirty_background_bytes;
 	/* convert ratios to per-PAGE_SIZE for higher precision */
 	unsigned long ratio = (vm_dirty_ratio * PAGE_SIZE) / 100;
-	unsigned long bg_ratio = ratio / LOCKED_DIRTY_RATIO;
+	unsigned long bg_ratio = (dirty_background_ratio * PAGE_SIZE) / 100;
 	unsigned long thresh;
 	unsigned long bg_thresh;
 	struct task_struct *tsk;
@@ -427,13 +438,20 @@ static void domain_dirty_limits(struct dirty_throttle_control *dtc)
 	else
 		bg_thresh = (bg_ratio * available_memory) / PAGE_SIZE;
 
-	if (bg_thresh >= thresh)
-		bg_thresh = thresh / 2;
 	tsk = current;
 	if (tsk->flags & PF_LESS_THROTTLE || rt_task(tsk)) {
 		bg_thresh += bg_thresh / 4 + global_wb_domain.dirty_limit / 32;
 		thresh += thresh / 4 + global_wb_domain.dirty_limit / 32;
 	}
+	/*
+	 * Dirty throttling logic assumes the limits in page units fit into
+	 * 32-bits. This gives 16TB dirty limits max which is hopefully enough.
+	 */
+	if (thresh > UINT_MAX)
+		thresh = UINT_MAX;
+	/* This makes sure bg_thresh is within 32-bits as well */
+	if (bg_thresh >= thresh)
+		bg_thresh = thresh / 2;
 	dtc->thresh = thresh;
 	dtc->bg_thresh = bg_thresh;
 
@@ -483,7 +501,11 @@ static unsigned long node_dirty_limit(struct pglist_data *pgdat)
 	if (tsk->flags & PF_LESS_THROTTLE || rt_task(tsk))
 		dirty += dirty / 4;
 
-	return dirty;
+	/*
+	 * Dirty throttling logic assumes the limits in page units fit into
+	 * 32-bits. This gives 16TB dirty limits max which is hopefully enough.
+	 */
+	return min_t(unsigned long, dirty, UINT_MAX);
 }
 
 /**
@@ -503,6 +525,37 @@ bool node_dirty_ok(struct pglist_data *pgdat)
 	nr_pages += node_page_state(pgdat, NR_WRITEBACK);
 
 	return nr_pages <= limit;
+}
+
+int dirty_background_ratio_handler(struct ctl_table *table, int write,
+		void __user *buffer, size_t *lenp,
+		loff_t *ppos)
+{
+	int ret;
+
+	ret = proc_dointvec_minmax(table, write, buffer, lenp, ppos);
+	if (ret == 0 && write)
+		dirty_background_bytes = 0;
+	return ret;
+}
+
+int dirty_background_bytes_handler(struct ctl_table *table, int write,
+		void __user *buffer, size_t *lenp,
+		loff_t *ppos)
+{
+	int ret;
+	unsigned long old_bytes = dirty_background_bytes;
+
+	ret = proc_doulongvec_minmax(table, write, buffer, lenp, ppos);
+	if (ret == 0 && write) {
+		if (DIV_ROUND_UP(dirty_background_bytes, PAGE_SIZE) >
+								UINT_MAX) {
+			dirty_background_bytes = old_bytes;
+			return -ERANGE;
+		}
+		dirty_background_ratio = 0;
+	}
+	return ret;
 }
 
 int dirty_ratio_handler(struct ctl_table *table, int write,
@@ -529,6 +582,10 @@ int dirty_bytes_handler(struct ctl_table *table, int write,
 
 	ret = proc_doulongvec_minmax(table, write, buffer, lenp, ppos);
 	if (ret == 0 && write && vm_dirty_bytes != old_bytes) {
+		if (DIV_ROUND_UP(vm_dirty_bytes, PAGE_SIZE) > UINT_MAX) {
+			vm_dirty_bytes = old_bytes;
+			return -ERANGE;
+		}
 		writeback_set_ratelimit();
 		vm_dirty_ratio = 0;
 	}
