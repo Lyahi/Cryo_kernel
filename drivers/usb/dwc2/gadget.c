@@ -846,6 +846,47 @@ static void dwc2_gadget_config_nonisoc_xfer_ddma(struct dwc2_hsotg_ep *hs_ep,
 }
 
 /*
+ * dwc2_gadget_config_nonisoc_xfer_ddma - prepare non ISOC DMA desc chain.
+ * @hs_ep: The endpoint
+ * @ureq: Request to transfer
+ * @offset: offset in bytes
+ * @len: Length of the transfer
+ *
+ * This function will iterate over descriptor chain and fill its entries
+ * with corresponding information based on transfer data.
+ */
+static void dwc2_gadget_config_nonisoc_xfer_ddma(struct dwc2_hsotg_ep *hs_ep,
+						 dma_addr_t dma_buff,
+						 unsigned int len)
+{
+	struct usb_request *ureq = NULL;
+	struct dwc2_dma_desc *desc = hs_ep->desc_list;
+	struct scatterlist *sg;
+	int i;
+	u8 desc_count = 0;
+
+	if (hs_ep->req)
+		ureq = &hs_ep->req->req;
+
+	/* non-DMA sg buffer */
+	if (!ureq || !ureq->num_sgs) {
+		dwc2_gadget_fill_nonisoc_xfer_ddma_one(hs_ep, &desc,
+			dma_buff, len, true);
+		return;
+	}
+
+	/* DMA sg buffer */
+	for_each_sg(ureq->sg, sg, ureq->num_mapped_sgs, i) {
+		dwc2_gadget_fill_nonisoc_xfer_ddma_one(hs_ep, &desc,
+			sg_dma_address(sg) + sg->offset, sg_dma_len(sg),
+			(i == (ureq->num_mapped_sgs - 1)));
+		desc_count += hs_ep->desc_count;
+	}
+
+	hs_ep->desc_count = desc_count;
+}
+
+/*
  * dwc2_gadget_fill_isoc_desc - fills next isochronous descriptor in chain.
  * @hs_ep: The isochronous endpoint.
  * @dma_buff: usb requests dma buffer.
