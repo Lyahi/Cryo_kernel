@@ -369,8 +369,11 @@ static void typec_altmode_release(struct device *dev)
 	struct typec_altmode *alt = to_altmode(dev);
 	int i;
 
-	for (i = 0; i < alt->n_modes; i++)
-		kfree(alt->modes[i].desc);
+	if (!is_typec_port(dev->parent))
+		typec_altmode_put_partner(alt);
+
+	altmode_id_remove(alt->adev.dev.parent, alt->id);
+	put_device(alt->adev.dev.parent);
 	kfree(alt);
 }
 
@@ -400,7 +403,34 @@ typec_register_altmode(struct device *parent,
 	alt->dev.type = &typec_altmode_dev_type;
 	dev_set_name(&alt->dev, "svid-%04x", alt->svid);
 
-	ret = device_register(&alt->dev);
+	if (is_port) {
+		alt->attrs[3] = &dev_attr_supported_roles.attr;
+		alt->adev.active = true; /* Enabled by default */
+	}
+
+	sprintf(alt->group_name, "mode%d", desc->mode);
+	alt->group.name = alt->group_name;
+	alt->group.attrs = alt->attrs;
+	alt->groups[0] = &alt->group;
+
+	alt->adev.dev.parent = parent;
+	alt->adev.dev.groups = alt->groups;
+	alt->adev.dev.type = &typec_altmode_dev_type;
+	dev_set_name(&alt->adev.dev, "%s.%u", dev_name(parent), id);
+
+	get_device(alt->adev.dev.parent);
+
+	/* Link partners and plugs with the ports */
+	if (is_port)
+		BLOCKING_INIT_NOTIFIER_HEAD(&alt->nh);
+	else
+		typec_altmode_set_partner(alt);
+
+	/* The partners are bind to drivers */
+	if (is_typec_partner(parent))
+		alt->adev.dev.bus = &typec_bus;
+
+	ret = device_register(&alt->adev.dev);
 	if (ret) {
 		dev_err(parent, "failed to register alternate mode (%d)\n",
 			ret);
