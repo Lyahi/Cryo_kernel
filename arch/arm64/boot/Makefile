@@ -56,7 +56,8 @@ $(obj)/Image-dtb: $(obj)/Image-dtb-hdr $(obj)/Image $(DTB_OBJS) FORCE
 	$(call if_changed,cat)
 
 $(obj)/Image.gz: $(obj)/Image FORCE
-	$(call if_changed,gzip)
+#	$(call if_changed,gzip)
+	$(call if_changed,pigz)
 
 $(obj)/Image.lz4: $(obj)/Image FORCE
 	$(call if_changed,lz4)
