@@ -1157,8 +1157,29 @@ static unsigned int smc_poll(struct file *file, struct socket *sock,
 		    (sk->sk_shutdown & SEND_SHUTDOWN)) {
 			mask |= POLLOUT | POLLWRNORM;
 		} else {
-			sk_set_bit(SOCKWQ_ASYNC_NOSPACE, sk);
-			set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
+			if ((sk->sk_state != SMC_INIT &&
+			     atomic_read(&smc->conn.sndbuf_space)) ||
+			    sk->sk_shutdown & SEND_SHUTDOWN) {
+				mask |= EPOLLOUT | EPOLLWRNORM;
+			} else {
+				sk_set_bit(SOCKWQ_ASYNC_NOSPACE, sk);
+				set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
+
+				if (sk->sk_state != SMC_INIT) {
+					/* Race breaker the same way as tcp_poll(). */
+					smp_mb__after_atomic();
+					if (atomic_read(&smc->conn.sndbuf_space))
+						mask |= EPOLLOUT | EPOLLWRNORM;
+				}
+			}
+			if (atomic_read(&smc->conn.bytes_to_rcv))
+				mask |= EPOLLIN | EPOLLRDNORM;
+			if (sk->sk_shutdown & RCV_SHUTDOWN)
+				mask |= EPOLLIN | EPOLLRDNORM | EPOLLRDHUP;
+			if (sk->sk_state == SMC_APPCLOSEWAIT1)
+				mask |= EPOLLIN;
+			if (smc->conn.urg_state == SMC_URG_VALID)
+				mask |= EPOLLPRI;
 		}
 		if (atomic_read(&smc->conn.bytes_to_rcv))
 			mask |= POLLIN | POLLRDNORM;
