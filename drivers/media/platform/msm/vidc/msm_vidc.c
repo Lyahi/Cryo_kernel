@@ -441,6 +441,11 @@ int msm_vidc_reqbufs(void *instance, struct v4l2_requestbuffers *b)
 	rc = vb2_reqbufs(&q->vb2_bufq, b);
 	mutex_unlock(&q->lock);
 
+	mutex_lock(&q->vb2_bufq.mmap_lock);
+	if (q->vb2_bufq.streaming && q->vb2_bufq.num_buffers && rc == -EBUSY)
+		rc = 0;
+	mutex_unlock(&q->vb2_bufq.mmap_lock);
+
 	if (rc)
 		dprintk(VIDC_ERR, "Failed to get reqbufs, %d\n", rc);
 	return rc;
