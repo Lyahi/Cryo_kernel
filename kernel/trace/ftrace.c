@@ -1643,6 +1643,7 @@ unsigned long ftrace_location_range(unsigned long start, unsigned long end)
 	struct dyn_ftrace *rec;
 	struct dyn_ftrace key;
 
+	preempt_disable_notrace();
 	key.ip = start;
 	key.flags = end;	/* overload flags, as it is unsigned long */
 
@@ -1657,8 +1658,8 @@ unsigned long ftrace_location_range(unsigned long start, unsigned long end)
 		if (rec)
 			return rec->ip;
 	}
-
-	return 0;
+	preempt_enable_notrace();
+	return ip;
 }
 
 /**
