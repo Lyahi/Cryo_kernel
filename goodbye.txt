@@ -1,0 +1,14 @@
+End of Support Announcement – Cryo Kernel for Redmi Note 8
+
+After much thought and reflection, I’ve decided to officially end support for the Redmi Note 8 and my custom kernel project, Cryo.
+
+This journey has been incredible — full of learning, challenges, and growth. Maintaining Cryo has been a passion project, and I'm proud of what we’ve built together. However, it’s time for me to move on to new things.
+
+To everyone who downloaded, tested, gave feedback, and believed in the project — thank you. Your support, trust, and enthusiasm made all of this worth it.
+A special shoutout to our Telegram group — your energy kept the community alive and the development going.
+
+This isn’t a goodbye forever — just the end of this chapter.
+Stay curious, keep experimenting, and never stop learning.
+Much love to all of you 💙
+
+— [lyahi]
