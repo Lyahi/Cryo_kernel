@@ -67,9 +67,9 @@ get_zip_name() {
     date=$(date +%Y%m%d)  # Get the current date in YYYYMMDD format
   
     if [[ -d "KernelSU" ]]; then
-        ZIPNAME="Cryo-ginkgo-v359-ksu-${date}.zip"
+        ZIPNAME="Cryo-ginkgo-ksu-${head}-${date}.zip"
     else
-        ZIPNAME="Cryo-kernel-retrofit-${head}-${date}.zip"
+        ZIPNAME="Cryo-ginkgo-${head}-${date}.zip"
     fi
 
     echo "$ZIPNAME"
@@ -85,11 +85,11 @@ set_kernelsu() {
         if [[ -d "KernelSU" ]]; then
             # Apply KernelSU hook patch
             echo "Applying KernelSU-hook.patch..."
-            if [[ -f "KernelSU-hook.patch" ]]; then
-                git apply KernelSU-hook.patch
+            if [[ -f "ksu_hook.patch" ]]; then
+                git apply ksu_hook.patch
                 echo "Patch applied successfully."
             else
-                echo "Patch KernelSU-hook.patch not found!"
+                echo "Patch ksu_hook.patch not found!"
             fi
             
             # Modify the defconfig to enable KernelSU
